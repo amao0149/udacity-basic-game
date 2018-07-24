@@ -53,7 +53,6 @@ Enemy.prototype.update = function(dt) {
     }
     this.x += this.speed * dt;
     this.secX = Math.floor(this.x / info.block.width + .5);
-    if (collision(this, player)) player.reset();
 };
 
 // 此为游戏必须的函数，用来在屏幕上画出敌人，
@@ -61,24 +60,20 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-function collision(enemy, player) {
-    if ((enemy.secY === player.secY) && (enemy.secX === player.secX)) {
-        return true;
-    }
-    return false;
-}
-
 // 现在实现你自己的玩家类
 // 这个类需要一个 update() 函数， render() 函数和一个 handleInput()函数
 var Player = function(type) {
     var charactors = {
-        boy: 'images/char-boy.png',
-        catGirl: 'images/char-cat-girl.png',
-        hornGirl: 'images/char-horn-girl.png',
-        pinkGirl: 'images/char-pink-girl.png',
-        princessGirl: 'images/char-princess-girl.png'
+        pinkGirl: {
+            url: 'images/char-pink-girl.png',
+            win: {
+                url: 'images/char-princess-girl.png'
+            }
+        }
     };
-    this.sprite = charactors[type] || charactors.boy;
+    this.defaultChar = 'pinkGirl';
+    this.char = type || this.defaultChar;
+    this.sprite = (charactors[this.char] && charactors[this.char].url) || charactors[defaultChar].url;
     this.charactors  = charactors;
     this.secX = 3; // 0-4
     this.secY = 4; // 0-5
@@ -86,13 +81,14 @@ var Player = function(type) {
 }
 
 Player.prototype.reset = function() {
+    this.sprite = this.charactors[this.defaultChar].url;
     this.secX = 3;
     this.secY = 4;
 }
 
 Player.prototype.update = function() {
     this.x = info.block.width * this.secX;
-    this.y = info.block.height * this.secY - 20;
+    this.y = info.block.height * this.secY - 10;
 }
 
 Player.prototype.render = function() {
@@ -103,12 +99,30 @@ Player.prototype.render = function() {
     }
 }
 
-Player.prototype.handleInput = function(direction) {
-    if (!direction) return;
+// 检测玩家是否与虫碰撞
+Player.prototype.checkCollisions = function() {
+    let flag = false;
+    const that = this;
+    allEnemies.forEach(function(enemy) {
+        if ((enemy.secY === that.secY) && (enemy.secX === that.secX)) {
+            return flag = true;
+        }
+    })
+    return flag;
+}
+
+// 如果玩家到达第0个区块则胜利并显示提示
+Player.prototype.handleIfWin = function() {
     if (this.secY === 0) {
-        this.reset();
-        return;
+        // this.sprite = this.charactors[this.char].win.url;
+        ctx.font = "50px '微软雅黑'";
+        ctx.fillStyle = 'orange';
+        ctx.fillText('you win', this.x, this.y + 50);
     }
+}
+
+Player.prototype.handleInput = function(direction) {
+    if (!direction || (this.secY === 0)) return;
     switch (direction) {
         case 'up':
             this.secY = moveOp(0, 5, this.secY, 0);
@@ -128,7 +142,7 @@ Player.prototype.handleInput = function(direction) {
 // 现在实例化你的所有对象
 // 把所有敌人的对象都放进一个叫 allEnemies 的数组里面
 // 把玩家对象放进一个叫 player 的变量里面
-var player = new Player('catGirl');
+var player = new Player();
 
 function createEnemies(num) {
     var enemies = [];

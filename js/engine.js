@@ -21,7 +21,7 @@ var Engine = (function(global) {
         lastTime;
 
     canvas.width = 505;
-    canvas.height = 606;
+    canvas.height = 596;
     doc.body.appendChild(canvas);
 
     /* 这个函数是整个游戏的主入口，负责适当的调用 update / render 函数 */
@@ -52,6 +52,7 @@ var Engine = (function(global) {
      * 做一次就够了
      */
     function init() {
+        console.log('init')
         reset();
         lastTime = Date.now();
         main();
@@ -64,7 +65,12 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        if (player.checkCollisions()) {
+            console.log('collicde')
+            reset();
+        } else {
+            player.handleIfWin();
+        }
     }
 
     /* 这个函数会遍历在 app.js 定义的存放所有敌人实例的数组，并且调用他们的 update()
@@ -128,7 +134,7 @@ var Engine = (function(global) {
      * 函数调用一次。
      */
     function reset() {
-        // 空操作
+        player.reset();
     }
 
     /* 紧接着我们来加载我们知道的需要来绘制我们游戏关卡的图片。然后把 init 方法设置为回调函数。
